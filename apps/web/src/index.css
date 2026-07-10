@@ -99,6 +99,161 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   --glass-saturation: 1.08;
 }
 
+/* Named palettes. Each one maps onto the shared semantic color system so all
+   existing surfaces, including dialogs and diffs, inherit the selected theme. */
+:root.theme-codex-one.theme-codex-one {
+  color-scheme: dark;
+  --background: #282c34;
+  --app-chrome-background: #1f2022;
+  --foreground: #b8bec9;
+  --card: #2d313a;
+  --card-foreground: #c5cad3;
+  --popover: #30343d;
+  --popover-foreground: #c5cad3;
+  --primary: #7f9ccf;
+  --primary-foreground: #f4f6fa;
+  --secondary: #343943;
+  --secondary-foreground: #c0c6d0;
+  --muted: #30343c;
+  --muted-foreground: #929aa8;
+  --accent: #383d47;
+  --accent-foreground: #d0d4dc;
+  --border: #3a3f49;
+  --input: #414753;
+  --ring: #7895c4;
+  --destructive: #d46a6a;
+  --destructive-foreground: #ef9a9a;
+  --info: #7898c8;
+  --info-foreground: #9db8df;
+  --success: #78a66a;
+  --success-foreground: #9bc48e;
+  --warning: #c4a56a;
+  --warning-foreground: #ddc28b;
+}
+
+:root.theme-codex-one.theme-codex-one [data-slot="sidebar-wrapper"],
+:root.theme-codex-one.theme-codex-one [data-slot="sidebar-inner"] {
+  background-color: #23262c;
+}
+
+:root.theme-true-godot.theme-true-godot {
+  color-scheme: dark;
+  --background: #1d2229;
+  --app-chrome-background: #252b34;
+  --foreground: #cdcfd2;
+  --card: #252b34;
+  --card-foreground: #e0e0e0;
+  --popover: #363d4a;
+  --popover-foreground: #e0e0e0;
+  --primary: #5b94c6;
+  --primary-foreground: #f5fbff;
+  --secondary: #363d4a;
+  --secondary-foreground: #cdcfd2;
+  --muted: #2d3238;
+  --muted-foreground: #9ea1a5;
+  --accent: #374f66;
+  --accent-foreground: #e0e0e0;
+  --border: #42474d;
+  --input: #4c525e;
+  --ring: #70bafa;
+  --destructive: #ff786b;
+  --destructive-foreground: #ff9c93;
+  --info: #57b2ff;
+  --info-foreground: #8dccff;
+  --success: #42ffc2;
+  --success-foreground: #7dffd5;
+  --warning: #ffde66;
+  --warning-foreground: #ffea9e;
+}
+
+:root.theme-github-dark.theme-github-dark {
+  color-scheme: dark;
+  --background: #0d1117;
+  --app-chrome-background: #010409;
+  --foreground: #e6edf3;
+  --card: #161b22;
+  --card-foreground: #e6edf3;
+  --popover: #161b22;
+  --popover-foreground: #e6edf3;
+  --primary: #2f81f7;
+  --primary-foreground: #ffffff;
+  --secondary: #21262d;
+  --secondary-foreground: #e6edf3;
+  --muted: #21262d;
+  --muted-foreground: #8b949e;
+  --accent: #1f6feb;
+  --accent-foreground: #ffffff;
+  --border: #30363d;
+  --input: #3d444d;
+  --ring: #2f81f7;
+}
+
+:root.theme-nord.theme-nord {
+  color-scheme: dark;
+  --background: #2e3440;
+  --app-chrome-background: #272c36;
+  --foreground: #eceff4;
+  --card: #3b4252;
+  --card-foreground: #eceff4;
+  --popover: #3b4252;
+  --popover-foreground: #eceff4;
+  --primary: #88c0d0;
+  --primary-foreground: #2e3440;
+  --secondary: #434c5e;
+  --secondary-foreground: #e5e9f0;
+  --muted: #3b4252;
+  --muted-foreground: #aeb8c7;
+  --accent: #4c566a;
+  --accent-foreground: #eceff4;
+  --border: #4c566a;
+  --input: #59657a;
+  --ring: #88c0d0;
+}
+
+:root.theme-dracula.theme-dracula {
+  color-scheme: dark;
+  --background: #282a36;
+  --app-chrome-background: #21222c;
+  --foreground: #f8f8f2;
+  --card: #30323f;
+  --card-foreground: #f8f8f2;
+  --popover: #343746;
+  --popover-foreground: #f8f8f2;
+  --primary: #bd93f9;
+  --primary-foreground: #282a36;
+  --secondary: #44475a;
+  --secondary-foreground: #f8f8f2;
+  --muted: #383a49;
+  --muted-foreground: #b7b7c1;
+  --accent: #44475a;
+  --accent-foreground: #f8f8f2;
+  --border: #4f5268;
+  --input: #5b5f78;
+  --ring: #bd93f9;
+}
+
+:root.theme-solarized-light.theme-solarized-light {
+  color-scheme: light;
+  --background: #fdf6e3;
+  --app-chrome-background: #eee8d5;
+  --foreground: #586e75;
+  --card: #fffaf0;
+  --card-foreground: #586e75;
+  --popover: #fffdf5;
+  --popover-foreground: #586e75;
+  --primary: #268bd2;
+  --primary-foreground: #ffffff;
+  --secondary: #eee8d5;
+  --secondary-foreground: #586e75;
+  --muted: #eee8d5;
+  --muted-foreground: #7b9095;
+  --accent: #e7dfc7;
+  --accent-foreground: #3e565d;
+  --border: #d8cfb8;
+  --input: #c9bea4;
+  --ring: #268bd2;
+}
+
 [data-slot="sidebar-wrapper"] {
   --workspace-titlebar-content-left: calc(
     var(--workspace-controls-left) + var(--workspace-titlebar-control-size) +

@@ -27,6 +27,24 @@ afterEach(() => {
 });
 
 describe("theme failure handling", () => {
+  it("persists named palettes and maps them to the desktop color scheme", async () => {
+    const localStorage = createStorage();
+    localStorage.setItem("t3code:theme", "true-godot");
+    const setTheme = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("window", { localStorage, desktopBridge: { setTheme } });
+
+    const { readThemePreference, syncDesktopTheme, writeThemePreference } =
+      await import("./useTheme");
+
+    expect(readThemePreference()).toBe("true-godot");
+    writeThemePreference("codex-one");
+    expect(localStorage.getItem("t3code:theme")).toBe("codex-one");
+
+    syncDesktopTheme("codex-one");
+    await Promise.resolve();
+    expect(setTheme).toHaveBeenCalledWith("dark");
+  });
+
   it("preserves exact storage causes and operation context", async () => {
     const readCause = new Error("storage read blocked");
     const writeCause = new Error("storage quota exceeded");
