@@ -103,7 +103,7 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
    existing surfaces, including dialogs and diffs, inherit the selected theme. */
 :root.theme-codex-one.theme-codex-one {
   color-scheme: dark;
-  --background: #282c34;
+  --background: #262a32;
   --app-chrome-background: #1f2022;
   --foreground: #b8bec9;
   --card: #2d313a;
@@ -133,7 +133,7 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
 
 :root.theme-codex-one.theme-codex-one [data-slot="sidebar-wrapper"],
 :root.theme-codex-one.theme-codex-one [data-slot="sidebar-inner"] {
-  background-color: #23262c;
+  background-color: #21242a;
 }
 
 :root.theme-true-godot.theme-true-godot {
