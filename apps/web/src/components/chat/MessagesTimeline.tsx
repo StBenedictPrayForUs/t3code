@@ -175,6 +175,7 @@ interface MessagesTimelineProps {
   resolvedTheme: "light" | "dark";
   timestampFormat: TimestampFormat;
   workspaceRoot: string | undefined;
+  emptyStateProjectName?: string | undefined;
   skills?: ReadonlyArray<Pick<ServerProviderSkill, "name" | "displayName">>;
   anchorMessageId: MessageId | null;
   onAnchorReady: (messageId: MessageId, anchorIndex: number) => void;
@@ -210,6 +211,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   resolvedTheme,
   timestampFormat,
   workspaceRoot,
+  emptyStateProjectName,
   skills = EMPTY_TIMELINE_SKILLS,
   anchorMessageId,
   onAnchorReady,
@@ -473,9 +475,22 @@ export const MessagesTimeline = memo(function MessagesTimeline({
     }
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-muted-foreground/30">
-          Send a message to start the conversation.
-        </p>
+        {emptyStateProjectName ? (
+          <p className="text-xl text-muted-foreground/70 sm:text-2xl">
+            What should we build in{" "}
+            <span
+              className="font-medium text-foreground/75 underline decoration-border decoration-dotted underline-offset-4 transition-colors hover:text-foreground"
+              title={workspaceRoot}
+            >
+              {emptyStateProjectName}
+            </span>
+            ?
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground/30">
+            Send a message to start the conversation.
+          </p>
+        )}
       </div>
     );
   }

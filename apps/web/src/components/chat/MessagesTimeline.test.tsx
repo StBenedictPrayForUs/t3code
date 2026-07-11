@@ -296,6 +296,32 @@ describe("MessagesTimeline", () => {
     expect(markup).toContain("1 changed file");
   });
 
+  it("identifies the active project in an empty conversation", async () => {
+    const { MessagesTimeline } = await import("./MessagesTimeline");
+    const markup = renderToStaticMarkup(
+      <MessagesTimeline
+        {...buildProps()}
+        timelineEntries={[]}
+        emptyStateProjectName="T3Code"
+        workspaceRoot="C:\\Users\\codex\\T3Code"
+      />,
+    );
+
+    expect(markup).toContain("What should we build in");
+    expect(markup).toContain("T3Code");
+    expect(markup).toContain('title="C:');
+    expect(markup).not.toContain("Send a message to start the conversation.");
+  });
+
+  it("keeps the generic empty state when no project is available", async () => {
+    const { MessagesTimeline } = await import("./MessagesTimeline");
+    const markup = renderToStaticMarkup(
+      <MessagesTimeline {...buildProps()} timelineEntries={[]} />,
+    );
+
+    expect(markup).toContain("Send a message to start the conversation.");
+  });
+
   it("uses LegendList isNearEnd when deciding whether the live edge is visible", async () => {
     const {
       resolveTimelineIsAtEnd,
