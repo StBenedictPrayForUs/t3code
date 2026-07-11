@@ -403,6 +403,30 @@ describe("MessagesTimeline", () => {
     expect(markup).toContain("1 changed file");
   });
 
+  it("identifies the active project in an empty conversation", async () => {
+    const markup = renderToStaticMarkup(
+      <MessagesTimeline
+        {...buildProps()}
+        timelineEntries={[]}
+        emptyStateProjectName="T3Code"
+        workspaceRoot="C:\\Users\\codex\\T3Code"
+      />,
+    );
+
+    expect(markup).toContain("What should we build in");
+    expect(markup).toContain("T3Code");
+    expect(markup).toContain('title="C:');
+    expect(markup).not.toContain("Send a message to start the conversation.");
+  });
+
+  it("keeps the generic empty state when no project is available", async () => {
+    const markup = renderToStaticMarkup(
+      <MessagesTimeline {...buildProps()} timelineEntries={[]} />,
+    );
+
+    expect(markup).toContain("Send a message to start the conversation.");
+  });
+
   it("treats only the strict list end as the live edge", async () => {
     const {
       resolveTimelineIsAtEnd,
