@@ -10,20 +10,38 @@ function thread(input: {
   readonly turnId: string;
   readonly state: "running" | "completed" | "error" | "interrupted";
   readonly completedAt?: string | null;
+  readonly sessionStatus?: "starting" | "running" | "ready" | "idle" | "error";
+  readonly withoutLatestTurn?: boolean;
 }): EnvironmentThreadShell {
   return {
     environmentId: "local",
     id: "thread-1",
     projectId: "project-1",
     title: "Fix notifications",
-    latestTurn: {
-      turnId: input.turnId,
-      state: input.state,
-      requestedAt: "2026-07-17T12:00:00.000Z",
-      startedAt: "2026-07-17T12:00:01.000Z",
-      completedAt: input.completedAt ?? null,
-      assistantMessageId: null,
-    },
+    latestTurn: input.withoutLatestTurn
+      ? null
+      : {
+          turnId: input.turnId,
+          state: input.state,
+          requestedAt: "2026-07-17T12:00:00.000Z",
+          startedAt: "2026-07-17T12:00:01.000Z",
+          completedAt: input.completedAt ?? null,
+          assistantMessageId: null,
+        },
+    session: input.sessionStatus
+      ? {
+          threadId: "thread-1",
+          status: input.sessionStatus,
+          providerName: "Codex",
+          runtimeMode: "full-access",
+          activeTurnId:
+            input.sessionStatus === "starting" || input.sessionStatus === "running"
+              ? input.turnId
+              : null,
+          lastError: null,
+          updatedAt: "2026-07-17T12:01:00.000Z",
+        }
+      : null,
   } as EnvironmentThreadShell;
 }
 
@@ -117,7 +135,63 @@ describe("observeTurnCompletions", () => {
     expect(reconnected.notifications).toHaveLength(1);
   });
 
-  it("does not report interrupted or failed turns as complete", () => {
+  it("notifies when teardown races completion and leaves the turn interrupted", () => {
+    const running = observeTurnCompletions({
+      previous: new Map(),
+      threads: [thread({ turnId: "turn-1", state: "running" })],
+      projects,
+    });
+    const completed = observeTurnCompletions({
+      previous: running.observedTurns,
+      threads: [
+        thread({
+          turnId: "turn-1",
+          state: "interrupted",
+          completedAt: "2026-07-17T12:01:00.000Z",
+        }),
+      ],
+      projects,
+    });
+
+    expect(completed.notifications).toHaveLength(1);
+  });
+
+  it("notifies when a no-checkpoint turn settles through the session", () => {
+    const running = observeTurnCompletions({
+      previous: new Map(),
+      threads: [
+        thread({
+          turnId: "turn-1",
+          state: "running",
+          sessionStatus: "running",
+          withoutLatestTurn: true,
+        }),
+      ],
+      projects,
+    });
+    const completed = observeTurnCompletions({
+      previous: running.observedTurns,
+      threads: [
+        thread({
+          turnId: "turn-1",
+          state: "completed",
+          sessionStatus: "ready",
+          withoutLatestTurn: true,
+        }),
+      ],
+      projects,
+    });
+
+    expect(completed.notifications).toEqual([
+      {
+        key: "local:thread-1:turn-1",
+        threadTitle: "Fix notifications",
+        projectTitle: "T3 Code",
+      },
+    ]);
+  });
+
+  it("does not report genuinely interrupted or failed turns as complete", () => {
     const running = observeTurnCompletions({
       previous: new Map(),
       threads: [thread({ turnId: "turn-1", state: "running" })],
@@ -131,7 +205,7 @@ describe("observeTurnCompletions", () => {
           thread({
             turnId: "turn-1",
             state,
-            completedAt: "2026-07-17T12:01:00.000Z",
+            completedAt: state === "interrupted" ? null : "2026-07-17T12:01:00.000Z",
           }),
         ],
         projects,
