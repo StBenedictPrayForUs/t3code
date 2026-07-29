@@ -4,6 +4,7 @@ import {
   clampPreviewMiniPlayerPosition,
   clampPreviewMiniPlayerSize,
   PREVIEW_MINI_PLAYER_EDGE_GAP,
+  resizePreviewMiniPlayerFromCorner,
 } from "./previewMiniPlayerLayout";
 
 describe("clampPreviewMiniPlayerPosition", () => {
@@ -70,4 +71,29 @@ describe("clampPreviewMiniPlayerSize", () => {
       clampPreviewMiniPlayerSize({ width: 360, height: 239 }, { width: 250, height: 180 }, 20),
     ).toEqual({ width: 226, height: 136 });
   });
+});
+
+describe("resizePreviewMiniPlayerFromCorner", () => {
+  it.each([
+    ["northwest", { x: -40, y: -30 }, { x: 160, y: 170 }],
+    ["northeast", { x: 40, y: -30 }, { x: 200, y: 170 }],
+    ["southwest", { x: -40, y: 30 }, { x: 160, y: 200 }],
+    ["southeast", { x: 40, y: 30 }, { x: 200, y: 200 }],
+  ] as const)(
+    "resizes from the %s corner while anchoring its opposite corner",
+    (corner, delta, position) => {
+      expect(
+        resizePreviewMiniPlayerFromCorner(
+          corner,
+          { x: 200, y: 200 },
+          { width: 320, height: 200 },
+          delta,
+          { width: 1_000, height: 700 },
+        ),
+      ).toEqual({
+        position,
+        size: { width: 360, height: 230 },
+      });
+    },
+  );
 });

@@ -4,6 +4,8 @@ export const PREVIEW_MINI_PLAYER_EDGE_GAP = 12;
 export const PREVIEW_MINI_PLAYER_DEFAULT_SIZE = { width: 320, height: 200 } as const;
 export const PREVIEW_MINI_PLAYER_MIN_SIZE = { width: 240, height: 150 } as const;
 
+export type PreviewMiniPlayerResizeCorner = "northeast" | "northwest" | "southeast" | "southwest";
+
 export function clampPreviewMiniPlayerSize(
   size: PreviewMiniPlayerSize,
   container: PreviewMiniPlayerSize,
@@ -43,4 +45,34 @@ export function clampPreviewMiniPlayerPosition(
     x: Math.min(Math.max(position.x, PREVIEW_MINI_PLAYER_EDGE_GAP), maxX),
     y: Math.min(Math.max(position.y, PREVIEW_MINI_PLAYER_EDGE_GAP), maxY),
   };
+}
+
+export function resizePreviewMiniPlayerFromCorner(
+  corner: PreviewMiniPlayerResizeCorner,
+  startPosition: PreviewMiniPlayerPosition,
+  startSize: PreviewMiniPlayerSize,
+  pointerDelta: PreviewMiniPlayerPosition,
+  container: PreviewMiniPlayerSize,
+  bottomInset = 0,
+): { position: PreviewMiniPlayerPosition; size: PreviewMiniPlayerSize } {
+  const fromWest = corner.endsWith("west");
+  const fromNorth = corner.startsWith("north");
+  const size = clampPreviewMiniPlayerSize(
+    {
+      width: startSize.width + pointerDelta.x * (fromWest ? -1 : 1),
+      height: startSize.height + pointerDelta.y * (fromNorth ? -1 : 1),
+    },
+    container,
+    bottomInset,
+  );
+  const position = clampPreviewMiniPlayerPosition(
+    {
+      x: fromWest ? startPosition.x + startSize.width - size.width : startPosition.x,
+      y: fromNorth ? startPosition.y + startSize.height - size.height : startPosition.y,
+    },
+    container,
+    size,
+    bottomInset,
+  );
+  return { position, size };
 }
