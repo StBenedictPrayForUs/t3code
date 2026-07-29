@@ -17,6 +17,8 @@ import {
   clampPreviewMiniPlayerPosition,
   clampPreviewMiniPlayerSize,
   PREVIEW_MINI_PLAYER_DEFAULT_SIZE,
+  type PreviewMiniPlayerResizeCorner,
+  resizePreviewMiniPlayerFromCorner,
 } from "./previewMiniPlayerLayout";
 
 interface DragState {
@@ -33,6 +35,9 @@ interface ResizeState {
   readonly pointerY: number;
   readonly width: number;
   readonly height: number;
+  readonly playerX: number;
+  readonly playerY: number;
+  readonly corner: PreviewMiniPlayerResizeCorner;
 }
 
 interface Props {
@@ -156,16 +161,25 @@ export function ThreadPreviewMiniPlayer({ threadRef, tabId, bottomInset }: Props
     }
   };
 
-  const handleResizePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const handleResizePointerDown = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    corner: PreviewMiniPlayerResizeCorner,
+  ) => {
     if (event.button !== 0) return;
     const root = rootRef.current;
-    if (!root) return;
+    const parent = root?.offsetParent;
+    if (!root || !(parent instanceof HTMLElement)) return;
+    const rootRect = root.getBoundingClientRect();
+    const parentRect = parent.getBoundingClientRect();
     resizeRef.current = {
       pointerId: event.pointerId,
       pointerX: event.clientX,
       pointerY: event.clientY,
       width: root.offsetWidth,
       height: root.offsetHeight,
+      playerX: rootRect.left - parentRect.left,
+      playerY: rootRect.top - parentRect.top,
+      corner,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
     event.preventDefault();
@@ -184,22 +198,16 @@ export function ThreadPreviewMiniPlayer({ threadRef, tabId, bottomInset }: Props
     ) {
       return;
     }
-    const nextSize = clampPreviewMiniPlayerSize(
-      {
-        width: resize.width + event.clientX - resize.pointerX,
-        height: resize.height + event.clientY - resize.pointerY,
-      },
+    const next = resizePreviewMiniPlayerFromCorner(
+      resize.corner,
+      { x: resize.playerX, y: resize.playerY },
+      { width: resize.width, height: resize.height },
+      { x: event.clientX - resize.pointerX, y: event.clientY - resize.pointerY },
       { width: parent.clientWidth, height: parent.clientHeight },
       bottomInset,
     );
-    usePreviewMiniPlayerStore.getState().resize(threadRef, tabId, nextSize);
-    const nextPosition = clampPreviewMiniPlayerPosition(
-      position ?? { x: root.offsetLeft, y: root.offsetTop },
-      { width: parent.clientWidth, height: parent.clientHeight },
-      nextSize,
-      bottomInset,
-    );
-    usePreviewMiniPlayerStore.getState().move(threadRef, tabId, nextPosition);
+    usePreviewMiniPlayerStore.getState().resize(threadRef, tabId, next.size);
+    usePreviewMiniPlayerStore.getState().move(threadRef, tabId, next.position);
   };
 
   const endResize = (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -299,16 +307,38 @@ export function ThreadPreviewMiniPlayer({ threadRef, tabId, bottomInset }: Props
             Reconnecting preview…
           </div>
         ) : null}
-        <button
-          type="button"
-          aria-label="Resize floating preview"
-          title="Resize floating preview"
-          className="pointer-events-auto absolute bottom-0 right-0 z-[33] size-5 cursor-nwse-resize rounded-br-xl after:absolute after:bottom-1 after:right-1 after:size-2 after:border-b after:border-r after:border-foreground/45"
-          onPointerDown={handleResizePointerDown}
-          onPointerMove={handleResizePointerMove}
-          onPointerUp={endResize}
-          onPointerCancel={endResize}
-        />
+        {(
+          [
+            [
+              "northwest",
+              "left-0 top-0 cursor-nwse-resize rounded-tl-xl after:left-1 after:top-1 after:border-l after:border-t",
+            ],
+            [
+              "northeast",
+              "right-0 top-0 cursor-nesw-resize rounded-tr-xl after:right-1 after:top-1 after:border-r after:border-t",
+            ],
+            [
+              "southwest",
+              "bottom-0 left-0 cursor-nesw-resize rounded-bl-xl after:bottom-1 after:left-1 after:border-b after:border-l",
+            ],
+            [
+              "southeast",
+              "bottom-0 right-0 cursor-nwse-resize rounded-br-xl after:bottom-1 after:right-1 after:border-b after:border-r",
+            ],
+          ] as const
+        ).map(([corner, cornerClassName]) => (
+          <button
+            key={corner}
+            type="button"
+            aria-label={`Resize floating preview from ${corner} corner`}
+            title={`Resize from ${corner} corner`}
+            className={`pointer-events-auto absolute z-[33] size-5 ${cornerClassName} after:absolute after:size-2 after:border-foreground/45`}
+            onPointerDown={(event) => handleResizePointerDown(event, corner)}
+            onPointerMove={handleResizePointerMove}
+            onPointerUp={endResize}
+            onPointerCancel={endResize}
+          />
+        ))}
       </div>
     </section>
   );
