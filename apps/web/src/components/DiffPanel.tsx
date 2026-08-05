@@ -28,7 +28,8 @@ import { useCodeViewFileReveal } from "./diffs/useCodeViewFileReveal";
 import { useOpenInPreferredEditor } from "../editorPreferences";
 import { useFileContextMenuHandler } from "../fileContextMenu";
 import { type DraftId } from "../composerDraftStore";
-import { openDiffFilePrimaryAction } from "../diffFileActions";
+import { openDiffFilePrimaryAction, resolveDiffFileEditorTarget } from "../diffFileActions";
+import { readLocalApi } from "../localApi";
 import { useCheckpointDiff } from "~/lib/checkpointDiffState";
 import { cn } from "~/lib/utils";
 import { selectThreadDiffPanelSelection, useDiffPanelStore } from "../diffPanelStore";
@@ -603,6 +604,27 @@ export default function DiffPanel({
       });
     },
     [activeCwd, activeRepositoryRoot, openInPreferredEditor, routeThreadRef],
+  );
+  const openDiffFileInEditor = useCallback(
+    (filePath: string) => {
+      void (async () => {
+        const targetPath = resolveDiffFileEditorTarget(filePath, activeCwd);
+        const result = await openInPreferredEditor(targetPath);
+        if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
+          console.warn("Failed to open diff file in editor.", {
+            operation: "open-diff-file-in-editor",
+            ...(routeThreadRef
+              ? {
+                  environmentId: routeThreadRef.environmentId,
+                  threadId: routeThreadRef.threadId,
+                }
+              : {}),
+            ...safeErrorLogAttributes(squashAtomCommandFailure(result)),
+          });
+        }
+      })();
+    },
+    [activeCwd, openInPreferredEditor, routeThreadRef],
   );
   const toggleDiffFileCollapsed = useCallback(
     (fileKey: string) => {
