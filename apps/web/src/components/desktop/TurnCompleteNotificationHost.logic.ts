@@ -12,6 +12,7 @@ type NotificationThread = Pick<
 interface ObservedTurn {
   readonly turnId: string | null;
   readonly phase: "working" | "completed" | "other";
+  readonly completedAt: string | null;
 }
 
 export interface TurnCompleteNotification {
@@ -46,6 +47,7 @@ function observeThreadTurn(
     return {
       turnId: latestTurn?.turnId ?? session?.activeTurnId ?? previous?.turnId ?? null,
       phase: "working",
+      completedAt: null,
     };
   }
 
@@ -54,17 +56,25 @@ function observeThreadTurn(
     latestTurn.completedAt !== null &&
     latestTurn.completedAt !== undefined
   ) {
-    return { turnId: latestTurn.turnId, phase: "completed" };
+    return {
+      turnId: latestTurn.turnId,
+      phase: "completed",
+      completedAt: latestTurn.completedAt,
+    };
   }
 
   // Quick turns with no checkpoint can lose latestTurn when their session
   // settles. Carry forward the identity seen while the session was working.
   if ((session?.status === "ready" || session?.status === "idle") && latestTurn === null) {
-    return { turnId: previous?.turnId ?? null, phase: "completed" };
+    return { turnId: previous?.turnId ?? null, phase: "completed", completedAt: null };
   }
 
   if (latestTurn === null && session === null) return null;
-  return { turnId: latestTurn?.turnId ?? previous?.turnId ?? null, phase: "other" };
+  return {
+    turnId: latestTurn?.turnId ?? previous?.turnId ?? null,
+    phase: "other",
+    completedAt: null,
+  };
 }
 
 /**
@@ -90,10 +100,18 @@ export function observeTurnCompletions(input: {
     if (currentTurn === null) continue;
     observedTurns.set(threadKey, currentTurn);
 
+    const isNewerCompletedTurn =
+      previousTurn !== undefined &&
+      previousTurn.turnId !== currentTurn.turnId &&
+      ((previousTurn.phase === "working" && previousTurn.completedAt === null) ||
+        (previousTurn.completedAt !== null &&
+          currentTurn.completedAt !== null &&
+          currentTurn.completedAt > previousTurn.completedAt));
     const newlyCompleted =
       currentTurn.phase === "completed" &&
       previousTurn !== undefined &&
-      (previousTurn.turnId !== currentTurn.turnId || previousTurn.phase !== "completed");
+      ((previousTurn.turnId === currentTurn.turnId && previousTurn.phase !== "completed") ||
+        isNewerCompletedTurn);
 
     if (!newlyCompleted) continue;
 
