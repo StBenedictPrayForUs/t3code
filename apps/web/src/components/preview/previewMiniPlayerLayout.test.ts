@@ -96,4 +96,30 @@ describe("resizePreviewMiniPlayerFromCorner", () => {
       });
     },
   );
+
+  it.each([
+    [
+      "northwest",
+      { x: -1_000, y: -1_000 },
+      { x: PREVIEW_MINI_PLAYER_EDGE_GAP, y: PREVIEW_MINI_PLAYER_EDGE_GAP },
+      { width: 908, height: 488 },
+    ],
+    ["northeast", { x: 400, y: -1_000 }, { x: 600, y: 12 }, { width: 388, height: 488 }],
+    ["southwest", { x: -1_000, y: 300 }, { x: 12, y: 300 }, { width: 908, height: 228 }],
+    ["southeast", { x: 400, y: 300 }, { x: 600, y: 300 }, { width: 388, height: 228 }],
+  ] as const)(
+    "keeps the opposite corner anchored when %s resizing reaches the viewport edge",
+    (corner, delta, position, size) => {
+      expect(
+        resizePreviewMiniPlayerFromCorner(
+          corner,
+          { x: 600, y: 300 },
+          { width: 320, height: 200 },
+          delta,
+          { width: 1_000, height: 700 },
+          160,
+        ),
+      ).toEqual({ position, size });
+    },
+  );
 });

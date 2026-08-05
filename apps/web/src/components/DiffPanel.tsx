@@ -22,7 +22,8 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOpenInPreferredEditor } from "../editorPreferences";
 import { type DraftId } from "../composerDraftStore";
-import { openDiffFilePrimaryAction } from "../diffFileActions";
+import { openDiffFilePrimaryAction, resolveDiffFileEditorTarget } from "../diffFileActions";
+import { readLocalApi } from "../localApi";
 import { useCheckpointDiff } from "~/lib/checkpointDiffState";
 import { cn } from "~/lib/utils";
 import { selectThreadDiffPanelSelection, useDiffPanelStore } from "../diffPanelStore";
@@ -490,6 +491,27 @@ export default function DiffPanel({
     },
     [activeCwd, openInPreferredEditor, routeThreadRef],
   );
+  const openDiffFileInEditor = useCallback(
+    (filePath: string) => {
+      void (async () => {
+        const targetPath = resolveDiffFileEditorTarget(filePath, activeCwd);
+        const result = await openInPreferredEditor(targetPath);
+        if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
+          console.warn("Failed to open diff file in editor.", {
+            operation: "open-diff-file-in-editor",
+            ...(routeThreadRef
+              ? {
+                  environmentId: routeThreadRef.environmentId,
+                  threadId: routeThreadRef.threadId,
+                }
+              : {}),
+            ...safeErrorLogAttributes(squashAtomCommandFailure(result)),
+          });
+        }
+      })();
+    },
+    [activeCwd, openInPreferredEditor, routeThreadRef],
+  );
   const toggleDiffFileCollapsed = useCallback(
     (fileKey: string) => {
       setCollapsedDiffFiles((current) => {
@@ -872,6 +894,28 @@ export default function DiffPanel({
                   );
                   const filePath = title?.textContent?.trim();
                   if (filePath) openDiffFile(filePath);
+                }}
+                onContextMenuCapture={(event) => {
+                  const composedPath = event.nativeEvent.composedPath?.() ?? [];
+                  const title = composedPath.find(
+                    (node): node is HTMLElement =>
+                      node instanceof HTMLElement && node.hasAttribute("data-title"),
+                  );
+                  const filePath = title?.textContent?.trim();
+                  if (!filePath) return;
+
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const api = readLocalApi();
+                  if (!api) return;
+                  void api.contextMenu
+                    .show([{ id: "open-in-editor", label: "Open in editor" }], {
+                      x: event.clientX,
+                      y: event.clientY,
+                    })
+                    .then((action) => {
+                      if (action === "open-in-editor") openDiffFileInEditor(filePath);
+                    });
                 }}
               >
                 <AnnotatableCodeView

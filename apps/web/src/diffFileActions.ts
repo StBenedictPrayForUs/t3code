@@ -10,6 +10,13 @@ interface OpenDiffFilePrimaryActionInput {
   readonly openInEditor: (targetPath: string) => void;
 }
 
+export function resolveDiffFileEditorTarget(
+  filePath: string,
+  activeCwd: string | undefined,
+): string {
+  return activeCwd ? resolvePathLinkTarget(filePath, activeCwd) : filePath;
+}
+
 export function openDiffFilePrimaryAction({
   threadRef,
   filePath,
@@ -21,5 +28,5 @@ export function openDiffFilePrimaryAction({
     return;
   }
 
-  openInEditor(activeCwd ? resolvePathLinkTarget(filePath, activeCwd) : filePath);
+  openInEditor(resolveDiffFileEditorTarget(filePath, activeCwd));
 }

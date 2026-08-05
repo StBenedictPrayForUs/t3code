@@ -15,17 +15,29 @@
       (() => {
         const LIGHT_BACKGROUND = "#ffffff";
         const DARK_BACKGROUND = "#161616";
+        const THEME_BACKGROUNDS = {
+          "codex-one": "#262a32",
+          "true-godot": "#1d2229",
+          "github-dark": "#0d1117",
+          nord: "#2e3440",
+          dracula: "#282a36",
+          "solarized-light": "#fdf6e3",
+        };
+        const THEMES = ["system", "light", "dark", ...Object.keys(THEME_BACKGROUNDS)];
         const themeColorMeta = document.querySelector('meta[name="theme-color"]');
         try {
           const storedTheme = window.localStorage.getItem("t3code:theme");
-          const theme =
-            storedTheme === "light" || storedTheme === "dark" || storedTheme === "system"
-              ? storedTheme
-              : "system";
+          const theme = THEMES.includes(storedTheme) ? storedTheme : "system";
           const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          const isDark = theme === "dark" || (theme === "system" && prefersDark);
+          const isLightTheme = theme === "light" || theme === "solarized-light";
+          const isDark = !isLightTheme && (theme !== "system" || prefersDark);
           document.documentElement.classList.toggle("dark", isDark);
-          const chromeColor = isDark ? DARK_BACKGROUND : LIGHT_BACKGROUND;
+          if (theme in THEME_BACKGROUNDS) {
+            document.documentElement.classList.add(`theme-${theme}`);
+          }
+          const chromeColor =
+            THEME_BACKGROUNDS[theme] ?? (isDark ? DARK_BACKGROUND : LIGHT_BACKGROUND);
+          document.documentElement.style.setProperty("--boot-background", chromeColor);
           document.documentElement.style.backgroundColor = chromeColor;
           themeColorMeta?.setAttribute("content", chromeColor);
         } catch {
@@ -45,7 +57,7 @@
       }
 
       body {
-        background: #ffffff;
+        background: var(--boot-background, #ffffff);
         color: #262626;
         font-family:
           "DM Sans Variable",
@@ -58,7 +70,7 @@
       }
 
       html.dark body {
-        background: #161616;
+        background: var(--boot-background, #161616);
         color: #f5f5f5;
       }
 
