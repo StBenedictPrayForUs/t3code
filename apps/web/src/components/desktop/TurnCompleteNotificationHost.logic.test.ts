@@ -135,6 +135,33 @@ describe("observeTurnCompletions", () => {
     expect(reconnected.notifications).toHaveLength(1);
   });
 
+  it("does not notify when the latest turn moves backward after a revert", () => {
+    const current = observeTurnCompletions({
+      previous: new Map(),
+      threads: [
+        thread({
+          turnId: "turn-2",
+          state: "completed",
+          completedAt: "2026-07-17T12:02:00.000Z",
+        }),
+      ],
+      projects,
+    });
+    const reverted = observeTurnCompletions({
+      previous: current.observedTurns,
+      threads: [
+        thread({
+          turnId: "turn-1",
+          state: "completed",
+          completedAt: "2026-07-17T12:01:00.000Z",
+        }),
+      ],
+      projects,
+    });
+
+    expect(reverted.notifications).toEqual([]);
+  });
+
   it("does not notify when an interrupted turn carries its terminal timestamp", () => {
     const running = observeTurnCompletions({
       previous: new Map(),
