@@ -135,13 +135,13 @@ describe("observeTurnCompletions", () => {
     expect(reconnected.notifications).toHaveLength(1);
   });
 
-  it("notifies when teardown races completion and leaves the turn interrupted", () => {
+  it("does not notify when an interrupted turn carries its terminal timestamp", () => {
     const running = observeTurnCompletions({
       previous: new Map(),
       threads: [thread({ turnId: "turn-1", state: "running" })],
       projects,
     });
-    const completed = observeTurnCompletions({
+    const interrupted = observeTurnCompletions({
       previous: running.observedTurns,
       threads: [
         thread({
@@ -153,7 +153,7 @@ describe("observeTurnCompletions", () => {
       projects,
     });
 
-    expect(completed.notifications).toHaveLength(1);
+    expect(interrupted.notifications).toEqual([]);
   });
 
   it("notifies when a no-checkpoint turn settles through the session", () => {
@@ -191,7 +191,7 @@ describe("observeTurnCompletions", () => {
     ]);
   });
 
-  it("does not report genuinely interrupted or failed turns as complete", () => {
+  it("does not report interrupted or failed turns as complete", () => {
     const running = observeTurnCompletions({
       previous: new Map(),
       threads: [thread({ turnId: "turn-1", state: "running" })],
@@ -205,7 +205,7 @@ describe("observeTurnCompletions", () => {
           thread({
             turnId: "turn-1",
             state,
-            completedAt: state === "interrupted" ? null : "2026-07-17T12:01:00.000Z",
+            completedAt: "2026-07-17T12:01:00.000Z",
           }),
         ],
         projects,

@@ -49,12 +49,10 @@ function observeThreadTurn(
     };
   }
 
-  // Session teardown can race turn.completed and leave the state marked as
-  // interrupted. completedAt is the durable proof that the turn did finish.
   if (
-    latestTurn?.completedAt !== null &&
-    latestTurn?.completedAt !== undefined &&
-    (latestTurn.state === "completed" || latestTurn.state === "interrupted")
+    latestTurn?.state === "completed" &&
+    latestTurn.completedAt !== null &&
+    latestTurn.completedAt !== undefined
   ) {
     return { turnId: latestTurn.turnId, phase: "completed" };
   }
