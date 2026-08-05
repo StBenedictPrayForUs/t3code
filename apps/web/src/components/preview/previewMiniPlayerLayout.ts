@@ -57,14 +57,27 @@ export function resizePreviewMiniPlayerFromCorner(
 ): { position: PreviewMiniPlayerPosition; size: PreviewMiniPlayerSize } {
   const fromWest = corner.endsWith("west");
   const fromNorth = corner.startsWith("north");
-  const size = clampPreviewMiniPlayerSize(
-    {
-      width: startSize.width + pointerDelta.x * (fromWest ? -1 : 1),
-      height: startSize.height + pointerDelta.y * (fromNorth ? -1 : 1),
-    },
-    container,
-    bottomInset,
+  const reservedBottomSpace = Math.max(0, bottomInset);
+  const oppositeX = fromWest ? startPosition.x + startSize.width : startPosition.x;
+  const oppositeY = fromNorth ? startPosition.y + startSize.height : startPosition.y;
+  const maxWidth = Math.max(
+    1,
+    fromWest
+      ? oppositeX - PREVIEW_MINI_PLAYER_EDGE_GAP
+      : container.width - PREVIEW_MINI_PLAYER_EDGE_GAP - oppositeX,
   );
+  const maxHeight = Math.max(
+    1,
+    fromNorth
+      ? oppositeY - PREVIEW_MINI_PLAYER_EDGE_GAP
+      : container.height - reservedBottomSpace - PREVIEW_MINI_PLAYER_EDGE_GAP - oppositeY,
+  );
+  const width = startSize.width + pointerDelta.x * (fromWest ? -1 : 1);
+  const height = startSize.height + pointerDelta.y * (fromNorth ? -1 : 1);
+  const size = {
+    width: Math.round(Math.min(Math.max(PREVIEW_MINI_PLAYER_MIN_SIZE.width, width), maxWidth)),
+    height: Math.round(Math.min(Math.max(PREVIEW_MINI_PLAYER_MIN_SIZE.height, height), maxHeight)),
+  };
   const position = clampPreviewMiniPlayerPosition(
     {
       x: fromWest ? startPosition.x + startSize.width - size.width : startPosition.x,
