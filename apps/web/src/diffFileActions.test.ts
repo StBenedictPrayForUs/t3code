@@ -2,7 +2,11 @@ import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { openDiffFilePrimaryAction, resolveDiffPathForWorkspace } from "./diffFileActions";
+import {
+  openDiffFilePrimaryAction,
+  resolveDiffFileEditorTarget,
+  resolveDiffPathForWorkspace,
+} from "./diffFileActions";
 import { selectThreadRightPanelState, useRightPanelStore } from "./rightPanelStore";
 
 const THREAD_REF = scopeThreadRef(
@@ -121,4 +125,10 @@ describe("openDiffFilePrimaryAction", () => {
       expect(openInEditor).not.toHaveBeenCalled();
     },
   );
+
+  it("resolves a diff path for the external editor", () => {
+    expect(resolveDiffFileEditorTarget("src/main.ts:12", "/repo/project")).toBe(
+      "/repo/project/src/main.ts:12",
+    );
+  });
 });
