@@ -607,7 +607,8 @@ export default function DiffPanel({
   const openDiffFileInEditor = useCallback(
     (filePath: string) => {
       void (async () => {
-        const targetPath = resolveDiffFileEditorTarget(filePath, activeCwd);
+        const targetPath = resolveDiffFileEditorTarget(filePath, activeCwd, activeRepositoryRoot);
+        if (!targetPath) return;
         const result = await openInPreferredEditor(targetPath);
         if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
           console.warn("Failed to open diff file in editor.", {
@@ -623,7 +624,7 @@ export default function DiffPanel({
         }
       })();
     },
-    [activeCwd, openInPreferredEditor, routeThreadRef],
+    [activeCwd, activeRepositoryRoot, openInPreferredEditor, routeThreadRef],
   );
   const toggleDiffFileCollapsed = useCallback(
     (fileKey: string) => {
