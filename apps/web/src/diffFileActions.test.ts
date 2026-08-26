@@ -131,4 +131,10 @@ describe("openDiffFilePrimaryAction", () => {
       "/repo/project/src/main.ts:12",
     );
   });
+
+  it("resolves repository-relative editor targets from a nested project", () => {
+    expect(resolveDiffFileEditorTarget("frontend/Dockerfile", "/repo/frontend", "/repo")).toBe(
+      "/repo/frontend/Dockerfile",
+    );
+  });
 });

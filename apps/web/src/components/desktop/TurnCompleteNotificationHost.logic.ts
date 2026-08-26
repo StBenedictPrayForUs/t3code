@@ -37,6 +37,25 @@ function observeThreadTurn(
   const latestTurn = thread.latestTurn;
   const session = thread.session;
 
+  // Starting does not always have a turn identity yet. Preserve the last
+  // observation until the provider assigns one so a failed startup cannot
+  // temporarily demote an older completed turn and then "complete" it again.
+  if (session?.status === "starting" && session.activeTurnId === null) {
+    if (previous !== undefined) return previous;
+    if (
+      latestTurn?.state === "completed" &&
+      latestTurn.completedAt !== null &&
+      latestTurn.completedAt !== undefined
+    ) {
+      return {
+        turnId: latestTurn.turnId,
+        phase: "completed",
+        completedAt: latestTurn.completedAt,
+      };
+    }
+    return null;
+  }
+
   // The live session is authoritative while it is working, even if a stale
   // latestTurn happens to carry a completion timestamp.
   if (
@@ -45,7 +64,10 @@ function observeThreadTurn(
     latestTurn?.state === "running"
   ) {
     return {
-      turnId: latestTurn?.turnId ?? session?.activeTurnId ?? previous?.turnId ?? null,
+      turnId:
+        session?.activeTurnId ??
+        (latestTurn?.state === "running" ? latestTurn.turnId : previous?.turnId) ??
+        null,
       phase: "working",
       completedAt: null,
     };

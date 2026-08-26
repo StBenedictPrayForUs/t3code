@@ -80,8 +80,15 @@ export function resolveDiffPathForWorkspace(input: {
 export function resolveDiffFileEditorTarget(
   filePath: string,
   activeCwd: string | undefined,
-): string {
-  return activeCwd ? resolvePathLinkTarget(filePath, activeCwd) : filePath;
+  repositoryRoot?: string | undefined,
+): string | null {
+  const workspaceFilePath = resolveDiffPathForWorkspace({
+    filePath,
+    workspaceRoot: activeCwd,
+    repositoryRoot,
+  });
+  if (!workspaceFilePath) return null;
+  return activeCwd ? resolvePathLinkTarget(workspaceFilePath, activeCwd) : workspaceFilePath;
 }
 
 export function openDiffFilePrimaryAction({
@@ -103,5 +110,6 @@ export function openDiffFilePrimaryAction({
     return;
   }
 
-  openInEditor(resolveDiffFileEditorTarget(workspaceFilePath, activeCwd));
+  const targetPath = resolveDiffFileEditorTarget(workspaceFilePath, activeCwd);
+  if (targetPath) openInEditor(targetPath);
 }
