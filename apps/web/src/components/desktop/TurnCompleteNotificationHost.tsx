@@ -14,6 +14,11 @@ const EMPTY_OBSERVATION: TurnCompletionObservation = {
 
 /** Shows a native Windows notification when a turn finishes while T3 Code is unfocused. */
 export function TurnCompleteNotificationHost() {
+  if (!isElectron) return null;
+  return <ElectronTurnCompleteNotificationHost />;
+}
+
+function ElectronTurnCompleteNotificationHost() {
   const threads = useThreadShells();
   const projects = useProjects();
   const observationRef = useRef<TurnCompletionObservation>(EMPTY_OBSERVATION);
@@ -27,7 +32,6 @@ export function TurnCompleteNotificationHost() {
     observationRef.current = observation;
 
     if (
-      !isElectron ||
       document.hasFocus() ||
       typeof window.Notification === "undefined" ||
       window.Notification.permission === "denied"

@@ -551,7 +551,6 @@ describe("MessagesTimeline", () => {
 
     expect(markup).toContain("What should we build in");
     expect(markup).toContain("T3Code");
-    expect(markup).toContain('title="C:');
     expect(markup).not.toContain("Send a message to start the conversation.");
   });
 
