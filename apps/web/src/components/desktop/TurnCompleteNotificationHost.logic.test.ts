@@ -10,7 +10,8 @@ function thread(input: {
   readonly turnId: string;
   readonly state: "running" | "completed" | "error" | "interrupted";
   readonly completedAt?: string | null;
-  readonly sessionStatus?: "starting" | "running" | "ready" | "idle" | "error";
+  readonly sessionStatus?: "starting" | "running" | "ready" | "idle" | "error" | "stopped";
+  readonly activeTurnId?: string | null;
   readonly withoutLatestTurn?: boolean;
 }): EnvironmentThreadShell {
   return {
@@ -35,9 +36,11 @@ function thread(input: {
           providerName: "Codex",
           runtimeMode: "full-access",
           activeTurnId:
-            input.sessionStatus === "starting" || input.sessionStatus === "running"
-              ? input.turnId
-              : null,
+            input.activeTurnId !== undefined
+              ? input.activeTurnId
+              : input.sessionStatus === "starting" || input.sessionStatus === "running"
+                ? input.turnId
+                : null,
           lastError: null,
           updatedAt: "2026-07-17T12:01:00.000Z",
         }
@@ -161,6 +164,51 @@ describe("observeTurnCompletions", () => {
 
     expect(reverted.notifications).toEqual([]);
   });
+
+  it.each(["error", "stopped"] as const)(
+    "does not replay an older completion after startup becomes %s",
+    (sessionStatus) => {
+      const completed = observeTurnCompletions({
+        previous: new Map(),
+        threads: [
+          thread({
+            turnId: "turn-1",
+            state: "completed",
+            completedAt: "2026-07-17T12:01:00.000Z",
+          }),
+        ],
+        projects,
+      });
+      const starting = observeTurnCompletions({
+        previous: completed.observedTurns,
+        threads: [
+          thread({
+            turnId: "turn-1",
+            state: "completed",
+            completedAt: "2026-07-17T12:01:00.000Z",
+            sessionStatus: "starting",
+            activeTurnId: null,
+          }),
+        ],
+        projects,
+      });
+      const failed = observeTurnCompletions({
+        previous: starting.observedTurns,
+        threads: [
+          thread({
+            turnId: "turn-1",
+            state: "completed",
+            completedAt: "2026-07-17T12:01:00.000Z",
+            sessionStatus,
+          }),
+        ],
+        projects,
+      });
+
+      expect(starting.notifications).toEqual([]);
+      expect(failed.notifications).toEqual([]);
+    },
+  );
 
   it("does not notify when an interrupted turn carries its terminal timestamp", () => {
     const running = observeTurnCompletions({
