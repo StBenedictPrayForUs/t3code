@@ -360,7 +360,6 @@ export function ThreadPreviewMiniPlayer({ threadRef, tabId, bottomInset }: Props
             key={corner}
             type="button"
             aria-label={`Resize floating preview from ${corner} corner`}
-            title={`Resize from ${corner} corner`}
             className={`pointer-events-auto absolute z-[33] size-5 ${cornerClassName} after:absolute after:size-2 after:border-foreground/45`}
             onPointerDown={(event) => handleResizePointerDown(event, corner)}
             onPointerMove={handleResizePointerMove}
