@@ -85,6 +85,28 @@ const REASONING_EFFORT_LABELS: Readonly<Record<string, string>> = {
 };
 
 const DEFAULT_SERVICE_TIER_ID = "default";
+const ASTRA_MODEL_SLUG = "gpt-6-astra";
+
+const ASTRA_FALLBACK_MODEL: ServerProviderModel = {
+  slug: ASTRA_MODEL_SLUG,
+  name: "GPT-6 Astra",
+  isCustom: false,
+  capabilities: createModelCapabilities({
+    optionDescriptors: [
+      {
+        id: "reasoningEffort",
+        label: "Reasoning",
+        type: "select",
+        options: ["low", "medium", "high", "xhigh", "max"].map((id) => ({
+          id,
+          label: reasoningEffortLabel(id),
+          ...(id === "medium" ? { isDefault: true } : {}),
+        })),
+        currentValue: "medium",
+      },
+    ],
+  }),
+};
 
 function reasoningEffortLabel(reasoningEffort: string): string {
   return REASONING_EFFORT_LABELS[reasoningEffort] ?? reasoningEffort;
@@ -223,6 +245,15 @@ function parseCodexModelListResponse(
     ...(model.isDefault ? { isDefault: true } : {}),
     capabilities: mapCodexModelCapabilities(model),
   }));
+}
+
+/** Keep newly released Astra selectable while Codex rolls out its catalog entry. */
+export function appendCodexAstraFallback(
+  models: ReadonlyArray<ServerProviderModel>,
+): ReadonlyArray<ServerProviderModel> {
+  return models.some((model) => model.slug === ASTRA_MODEL_SLUG)
+    ? models
+    : [ASTRA_FALLBACK_MODEL, ...models];
 }
 
 /**
@@ -463,7 +494,7 @@ const probeCodexAppServerProvider = Effect.fn("probeCodexAppServerProvider")(fun
     rateLimits,
     version,
     models: applyPreferredCodexDefaultModel(
-      appendCustomCodexModels(models, input.customModels ?? []),
+      appendCustomCodexModels(appendCodexAstraFallback(models), input.customModels ?? []),
     ),
     skills: parseCodexSkillsListResponse(skillsResponse, input.cwd),
   } satisfies CodexAppServerProviderSnapshot;
