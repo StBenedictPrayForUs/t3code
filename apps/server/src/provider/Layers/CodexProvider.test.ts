@@ -1,40 +1,6 @@
 import { assert, it } from "@effect/vitest";
 
-import {
-  appendCodexAstraFallback,
-  applyPreferredCodexDefaultModel,
-  mapCodexModelCapabilities,
-} from "./CodexProvider.ts";
-
-it("adds Astra while the Codex catalog rollout is pending", () => {
-  const models = appendCodexAstraFallback([
-    { slug: "gpt-5.6-sol", name: "GPT-5.6-Sol", isCustom: false, capabilities: null },
-  ]);
-
-  assert.equal(models[0]?.slug, "gpt-6-astra");
-  assert.equal(models[0]?.name, "GPT-6 Astra");
-  assert.deepStrictEqual(
-    models[0]?.capabilities?.optionDescriptors?.[0]?.type === "select"
-      ? models[0].capabilities.optionDescriptors[0].options.map((option) => option.id)
-      : [],
-    ["low", "medium", "high", "xhigh", "max"],
-  );
-});
-
-it("uses Astra metadata from Codex once it is available", () => {
-  const astra = {
-    slug: "gpt-6-astra",
-    name: "GPT-6 Astra",
-    isCustom: false,
-    isDefault: true,
-    capabilities: null,
-  } as const;
-
-  const models = appendCodexAstraFallback([astra]);
-
-  assert.strictEqual(models[0], astra);
-  assert.equal(models.length, 1);
-});
+import { applyPreferredCodexDefaultModel, mapCodexModelCapabilities } from "./CodexProvider.ts";
 
 it("maps current Codex model capability fields", () => {
   const capabilities = mapCodexModelCapabilities({
