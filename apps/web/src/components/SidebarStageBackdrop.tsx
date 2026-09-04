@@ -19,6 +19,9 @@ export function resolveSidebarStageBackdropVariant(
   if (!enabled) return null;
   const normalized = stageLabel.trim().toLowerCase();
   if (normalized === "nightly") return "nightly";
+  // Keep the nightly sky in packaged stable and hosted latest builds too. The
+  // stage label still drives app identity and updates; this only reuses its art.
+  if (normalized === "alpha" || normalized === "latest") return "nightly";
   if (normalized === "dev") return "dev";
   return null;
 }
