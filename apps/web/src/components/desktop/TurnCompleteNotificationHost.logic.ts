@@ -17,6 +17,8 @@ interface ObservedTurn {
 
 export interface TurnCompleteNotification {
   readonly key: string;
+  readonly environmentId: EnvironmentThreadShell["environmentId"];
+  readonly threadId: EnvironmentThreadShell["id"];
   readonly threadTitle: string;
   readonly projectTitle: string | null;
 }
@@ -28,6 +30,36 @@ export interface TurnCompletionObservation {
 
 function scopedKey(environmentId: string, id: string): string {
   return `${environmentId}:${id}`;
+}
+
+/** Observe pending input independently of turn completion, including non-blocking questions. */
+export function observeUserInputRequests(input: {
+  readonly previous: ReadonlyMap<string, boolean>;
+  readonly threads: ReadonlyArray<
+    NotificationThread & Pick<EnvironmentThreadShell, "hasPendingUserInput">
+  >;
+  readonly projects: ReadonlyArray<NotificationProject>;
+}) {
+  // Keep baselines across temporary environment disconnects, just like turn notifications.
+  const observedRequests = new Map(input.previous);
+  const notifications: TurnCompleteNotification[] = [];
+  const projectTitles = new Map(
+    input.projects.map((project) => [scopedKey(project.environmentId, project.id), project.title]),
+  );
+  for (const thread of input.threads) {
+    const key = scopedKey(thread.environmentId, thread.id);
+    observedRequests.set(key, thread.hasPendingUserInput);
+    // Initial snapshots establish a baseline rather than replaying old requests.
+    if (input.previous.get(key) !== false || !thread.hasPendingUserInput) continue;
+    notifications.push({
+      key: `${key}:user-input`,
+      environmentId: thread.environmentId,
+      threadId: thread.id,
+      threadTitle: thread.title,
+      projectTitle: projectTitles.get(scopedKey(thread.environmentId, thread.projectId)) ?? null,
+    });
+  }
+  return { observedRequests, notifications };
 }
 
 function observeThreadTurn(
@@ -139,6 +171,8 @@ export function observeTurnCompletions(input: {
 
     notifications.push({
       key: `${threadKey}:${currentTurn.turnId ?? "session"}`,
+      environmentId: thread.environmentId,
+      threadId: thread.id,
       threadTitle: thread.title,
       projectTitle: projectTitles.get(scopedKey(thread.environmentId, thread.projectId)) ?? null,
     });
