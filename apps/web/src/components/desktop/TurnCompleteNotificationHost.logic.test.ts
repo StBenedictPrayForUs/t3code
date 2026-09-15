@@ -3,8 +3,12 @@ import type {
   EnvironmentThreadShell,
 } from "@t3tools/client-runtime/state/shell";
 import { describe, expect, it } from "vite-plus/test";
+import type { EnvironmentId } from "@t3tools/contracts";
 
-import { observeTurnCompletions } from "./TurnCompleteNotificationHost.logic";
+import {
+  observeTurnCompletions,
+  observeUserInputRequests,
+} from "./TurnCompleteNotificationHost.logic";
 
 function thread(input: {
   readonly turnId: string;
@@ -56,6 +60,97 @@ const projects = [
   } as EnvironmentProject,
 ];
 
+describe("observeUserInputRequests", () => {
+  const runningThread = {
+    ...thread({ turnId: "turn-1", state: "running", sessionStatus: "running" }),
+    hasPendingUserInput: false,
+  };
+
+  it("notifies for input while the turn keeps running, once until input clears", () => {
+    const baseline = observeUserInputRequests({
+      previous: new Map(),
+      threads: [runningThread],
+      projects,
+    });
+    const pending = { ...runningThread, hasPendingUserInput: true };
+    const requested = observeUserInputRequests({
+      previous: baseline.observedRequests,
+      threads: [pending],
+      projects,
+    });
+    expect(requested.notifications).toEqual([
+      {
+        key: "local:thread-1:user-input",
+        environmentId: "local",
+        threadId: "thread-1",
+        threadTitle: "Fix notifications",
+        projectTitle: "T3 Code",
+      },
+    ]);
+    const repeated = observeUserInputRequests({
+      previous: requested.observedRequests,
+      threads: [pending],
+      projects,
+    });
+    expect(repeated.notifications).toEqual([]);
+    const cleared = observeUserInputRequests({
+      previous: repeated.observedRequests,
+      threads: [runningThread],
+      projects,
+    });
+    expect(cleared.notifications).toEqual([]);
+    expect(
+      observeUserInputRequests({ previous: cleared.observedRequests, threads: [pending], projects })
+        .notifications,
+    ).toHaveLength(1);
+  });
+
+  it("baselines existing input and preserves that baseline across disconnects", () => {
+    const pending = { ...runningThread, hasPendingUserInput: true };
+    const baseline = observeUserInputRequests({
+      previous: new Map(),
+      threads: [pending],
+      projects,
+    });
+    expect(baseline.notifications).toEqual([]);
+    const disconnected = observeUserInputRequests({
+      previous: baseline.observedRequests,
+      threads: [],
+      projects,
+    });
+    expect(
+      observeUserInputRequests({
+        previous: disconnected.observedRequests,
+        threads: [pending],
+        projects,
+      }).notifications,
+    ).toEqual([]);
+  });
+
+  it("keeps identical thread IDs in different environments independent", () => {
+    const remote = { ...runningThread, environmentId: "remote" as EnvironmentId };
+    const baseline = observeUserInputRequests({
+      previous: new Map(),
+      threads: [runningThread, remote],
+      projects,
+    });
+    const requested = observeUserInputRequests({
+      previous: baseline.observedRequests,
+      threads: [runningThread, { ...remote, hasPendingUserInput: true }],
+      projects,
+    });
+    expect(requested.notifications).toEqual([
+      {
+        key: "remote:thread-1:user-input",
+        environmentId: "remote",
+        threadId: "thread-1",
+        threadTitle: "Fix notifications",
+        projectTitle: null,
+      },
+    ]);
+  });
+});
+
 describe("observeTurnCompletions", () => {
   it("uses the first snapshot as a baseline without replaying completed turns", () => {
     const result = observeTurnCompletions({
@@ -105,6 +200,8 @@ describe("observeTurnCompletions", () => {
     expect(completed.notifications).toEqual([
       {
         key: "local:thread-1:turn-1",
+        environmentId: "local",
+        threadId: "thread-1",
         threadTitle: "Fix notifications",
         projectTitle: "T3 Code",
       },
@@ -260,6 +357,8 @@ describe("observeTurnCompletions", () => {
     expect(completed.notifications).toEqual([
       {
         key: "local:thread-1:turn-1",
+        environmentId: "local",
+        threadId: "thread-1",
         threadTitle: "Fix notifications",
         projectTitle: "T3 Code",
       },

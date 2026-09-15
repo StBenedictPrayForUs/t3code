@@ -40,6 +40,7 @@ import * as MacPermissions from "../../permissions/MacPermissions.ts";
 import { safariPermissionCheck } from "../../preview/BrowserImport/SafariPermission.ts";
 import * as IpcChannels from "../channels.ts";
 import * as DesktopIpc from "../DesktopIpc.ts";
+import * as DesktopWindow from "../../window/DesktopWindow.ts";
 import {
   extractDistroFromUncPath,
   resolveWslPickFolderDefaultPath,
@@ -61,6 +62,16 @@ function toWebSocketBaseUrl(httpBaseUrl: URL): string {
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   return url.href;
 }
+
+export const activateWindow = DesktopIpc.makeIpcMethod({
+  channel: IpcChannels.ACTIVATE_WINDOW_CHANNEL,
+  payload: Schema.Void,
+  result: Schema.Void,
+  handler: Effect.fn("desktop.ipc.window.activateWindow")(function* () {
+    const window = yield* DesktopWindow.DesktopWindow;
+    yield* window.activate;
+  }),
+});
 
 export const getAppBranding = DesktopIpc.makeSyncIpcMethod({
   channel: IpcChannels.GET_APP_BRANDING_CHANNEL,
