@@ -122,28 +122,36 @@ describe("ProjectFavicon", () => {
     testState.faviconUrl = "https://environment.test/api/assets/token-a/v1-20-favicon.svg";
   });
 
-  it("shows the project monogram when no favicon exists", () => {
+  it("shows a project-name icon when no favicon exists", () => {
     testState.faviconUrl = `https://environment.test/api/assets/token/${PROJECT_FAVICON_FALLBACK_MARKER}`;
 
     const element = ProjectFavicon({
       project: makeProject({ workspaceRoot: "/workspace/analytics-db", title: "analytics-db" }),
     }) as ReactElement<{
-      readonly projectName?: string;
+      readonly colorClassName?: string;
+      readonly emoji?: string;
+      readonly icon?: ComponentType<{ className?: string }>;
     }>;
 
-    expect(element.props.projectName).toBe("analytics-db");
+    expect(element.props.icon).toBeDefined();
+    expect(element.props.emoji).toBeUndefined();
+    expect(element.props.colorClassName).toContain("text-cyan-600");
   });
 
-  it("uses the same monogram fallback for every project category", () => {
+  it("chooses a deterministic semantic icon", () => {
     testState.faviconUrl = `https://environment.test/api/assets/token/${PROJECT_FAVICON_FALLBACK_MARKER}`;
 
     const element = ProjectFavicon({
       project: makeProject({ workspaceRoot: "/workspace/agent-runtime", title: "agent-runtime" }),
     }) as ReactElement<{
-      readonly projectName?: string;
+      readonly colorClassName?: string;
+      readonly emoji?: string;
+      readonly icon?: ComponentType<{ className?: string }>;
     }>;
 
-    expect(element.props.projectName).toBe("agent-runtime");
+    expect(element.props.icon).toBeDefined();
+    expect(element.props.emoji).toBeUndefined();
+    expect(element.props.colorClassName).toContain("text-violet-600");
   });
 
   it("renders a saved Lucide icon and color ahead of an uploaded favicon", () => {
